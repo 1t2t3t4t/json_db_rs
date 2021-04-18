@@ -13,8 +13,8 @@ pub trait Database: Send + Sync {
     where
         E: Serialize + DeserializeOwned;
     fn save_batch<E>(&self, entities: Vec<E>)
-        where
-            E: Serialize + DeserializeOwned;
+    where
+        E: Serialize + DeserializeOwned;
 }
 
 const DEFAULT_FILE_PATH: &str = "db";
@@ -56,6 +56,9 @@ impl JsonDatabase {
     {
         let path = self.path_to_entity::<E>();
         let file_content = std::fs::read_to_string(path).unwrap_or_default();
+        if file_content.is_empty() {
+            return vec![];
+        }
         let entities = serde_json::from_str::<Vec<E>>(&file_content);
         entities.unwrap()
     }
@@ -99,8 +102,10 @@ impl Database for JsonDatabase {
         self.save_json(all);
     }
 
-    fn save_batch<E>(&self, mut entities: Vec<E>) where
-        E: Serialize + DeserializeOwned {
+    fn save_batch<E>(&self, mut entities: Vec<E>)
+    where
+        E: Serialize + DeserializeOwned,
+    {
         let _guard = self.fs_mutex.lock();
         let mut all = self.get_all::<E>();
         all.append(&mut entities);
