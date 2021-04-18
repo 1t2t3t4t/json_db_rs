@@ -1,7 +1,7 @@
-use std::{borrow::Borrow, sync::Mutex};
+use std::sync::Mutex;
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use serde_json::{Result, Value, json};
+use serde::{de::DeserializeOwned, Serialize};
+
 use std::path::Path;
 
 pub trait Database: Send + Sync {
@@ -34,7 +34,7 @@ impl JsonDatabase {
     pub fn new_with_path(path: String) -> Self {
         Self {
             path,
-            fs_mutex: Mutex::new(())
+            fs_mutex: Mutex::new(()),
         }
     }
 
@@ -72,7 +72,7 @@ impl Default for JsonDatabase {
     fn default() -> Self {
         Self {
             path: DEFAULT_FILE_PATH.to_string(),
-            fs_mutex: Mutex::new(())
+            fs_mutex: Mutex::new(()),
         }
     }
 }
@@ -90,6 +90,7 @@ impl Database for JsonDatabase {
     where
         E: Serialize + DeserializeOwned,
     {
+        let _guard = self.fs_mutex.lock();
         let mut all = self.get_all::<E>();
         all.push(entity);
         self.save_json(all);
