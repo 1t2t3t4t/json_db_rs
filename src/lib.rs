@@ -12,6 +12,9 @@ pub trait Database: Send + Sync {
     fn save<E>(&self, entity: E)
     where
         E: Serialize + DeserializeOwned;
+    fn save_batch<E>(&self, entities: Vec<E>)
+        where
+            E: Serialize + DeserializeOwned;
 }
 
 const DEFAULT_FILE_PATH: &str = "db";
@@ -93,6 +96,14 @@ impl Database for JsonDatabase {
         let _guard = self.fs_mutex.lock();
         let mut all = self.get_all::<E>();
         all.push(entity);
+        self.save_json(all);
+    }
+
+    fn save_batch<E>(&self, mut entities: Vec<E>) where
+        E: Serialize + DeserializeOwned {
+        let _guard = self.fs_mutex.lock();
+        let mut all = self.get_all::<E>();
+        all.append(&mut entities);
         self.save_json(all);
     }
 }
