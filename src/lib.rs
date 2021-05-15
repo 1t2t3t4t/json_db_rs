@@ -42,7 +42,7 @@ fn guard_path_does_not_exist(p: String) {
     if p.exists() {
         return;
     }
-    std::fs::create_dir(p).unwrap();
+    std::fs::create_dir_all(p).unwrap();
 }
 
 impl JsonDatabase {

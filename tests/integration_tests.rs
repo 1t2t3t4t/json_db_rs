@@ -16,8 +16,7 @@ fn setup<T: Database>(db: &T) {
     db.drop_db::<TestObj>();
 }
 
-fn write_objs(amount: i32) -> Vec<TestObj> {
-    let db = JsonDatabase::default();
+fn write_objs(amount: i32, db: &JsonDatabase) -> Vec<TestObj> {
     let mut thing_to_add = Vec::<TestObj>::new();
     for i in 0..amount {
         let obj = TestObj {
@@ -33,8 +32,18 @@ fn write_objs(amount: i32) -> Vec<TestObj> {
 }
 
 #[test]
+fn test_write_and_read_single_not_existed() {
+    let db = JsonDatabase::new_with_path("db/test/test_write_and_read_single_not_existed");
+    setup(&db);
+
+    let saved_obj = db.get_one::<TestObj>();
+
+    assert_eq!(None, saved_obj);
+}
+
+#[test]
 fn test_write_and_read_single() {
-    let db = JsonDatabase::new_with_path("db/test_write_and_read_single");
+    let db = JsonDatabase::new_with_path("db/test/test_write_and_read_single");
     setup(&db);
     let obj = TestObj {
         name: "YoYo".to_string(),
@@ -51,10 +60,10 @@ fn test_write_and_read_single() {
 
 #[test]
 fn test_write_and_read_vec() {
-    let db = JsonDatabase::default();
+    let db = JsonDatabase::new_with_path("db/test/test_write_and_read_vec");
     setup(&db);
     let obj_amount = 20;
-    let objs = write_objs(obj_amount);
+    let objs = write_objs(obj_amount, &db);
 
     let all = db.get_all::<TestObj>();
 
