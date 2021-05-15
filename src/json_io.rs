@@ -14,7 +14,6 @@ where
     if json_content.is_empty() {
         None
     } else {
-        println!("{}", json_content);
         Some(serde_json::from_str::<E>(&json_content).expect("Failed to format json"))
     }
 }
