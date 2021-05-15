@@ -94,10 +94,7 @@ impl JsonDatabase {
 
 impl Default for JsonDatabase {
     fn default() -> Self {
-        Self {
-            path: DEFAULT_FILE_PATH.to_string(),
-            fs_mutex: Mutex::new(()),
-        }
+        Self::new_with_path(DEFAULT_FILE_PATH.to_string())
     }
 }
 
