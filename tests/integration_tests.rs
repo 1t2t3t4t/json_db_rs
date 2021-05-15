@@ -70,3 +70,13 @@ fn test_write_and_read_vec() {
     assert_eq!(all.len() as i32, obj_amount);
     assert_eq!(all, objs);
 }
+
+#[test]
+fn test_write_and_read_vec_not_existed() {
+    let db = JsonDatabase::new_with_path("db/test/test_write_and_read_vec_not_existed");
+    setup(&db);
+
+    let all = db.get_all::<TestObj>();
+
+    assert_eq!(all.len() as i32, 0i32);
+}
