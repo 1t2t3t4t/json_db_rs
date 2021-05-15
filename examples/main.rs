@@ -14,7 +14,7 @@ struct MyThing {
 fn elapsed_time(func: impl FnOnce()) {
     let start = std::time::Instant::now();
     func();
-    println!("Elapsed time: {} sec", start.elapsed().as_secs_f32());
+    println!("Elapsed time: {} m sec", start.elapsed().as_secs_f32() * 1000f32);
 }
 
 fn read_all() {
@@ -27,10 +27,7 @@ fn read_all() {
 fn extreme_write() {
     let db = JsonDatabase::default();
     let mut thing_to_add = Vec::<MyThing>::new();
-    for i in 0..20000000 {
-        if i % 1000000 == 0 {
-            println!("At {}", i);
-        }
+    for i in 0..1000 {
         let obj = MyThing {
             name: "YoYo".to_string(),
             rank: i,
