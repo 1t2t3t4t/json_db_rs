@@ -2,9 +2,9 @@ use std::sync::Mutex;
 
 use serde::{de::DeserializeOwned, Serialize};
 
-use std::fs::File;
-use std::io::{Cursor, Write};
 use std::path::Path;
+
+mod json_io;
 
 pub trait Database: Send + Sync {
     fn get_all<E>(&self) -> Vec<E>
@@ -62,34 +62,6 @@ impl JsonDatabase {
             std::fs::remove_file(path_obj).expect("Unable to drop");
         }
     }
-
-    fn load_json<E>(&self) -> Vec<E>
-    where
-        E: DeserializeOwned,
-    {
-        let path = self.path_to_entity::<E>();
-        let file_content = std::fs::read(path).unwrap_or_default();
-        let file_cursor = Cursor::new(file_content);
-        let decoded = zstd::decode_all(file_cursor).unwrap_or_default();
-        let json_content = String::from_utf8(decoded).unwrap_or_default();
-        if json_content.is_empty() {
-            return vec![];
-        }
-        let entities = serde_json::from_str::<Vec<E>>(&json_content);
-        entities.unwrap()
-    }
-
-    fn save_json<E>(&self, json: Vec<E>)
-    where
-        E: Serialize,
-    {
-        let path = self.path_to_entity::<E>();
-        let json_str = serde_json::to_string(&json).unwrap_or_default();
-        let encoded = zstd::encode_all(json_str.as_bytes(), 0).unwrap();
-        let mut file = File::create(path.clone()).unwrap();
-        file.write_all(&encoded)
-            .expect(&format!("Unable to write to path {}", path));
-    }
 }
 
 impl Default for JsonDatabase {
@@ -103,7 +75,8 @@ impl Database for JsonDatabase {
     where
         E: DeserializeOwned,
     {
-        let json = self.load_json::<E>();
+        let path = self.path_to_entity::<E>();
+        let json = json_io::load_json::<E>(path);
         json
     }
 
@@ -114,7 +87,9 @@ impl Database for JsonDatabase {
         let _guard = self.fs_mutex.lock();
         let mut all = self.get_all::<E>();
         all.push(entity);
-        self.save_json(all);
+
+        let path = self.path_to_entity::<E>();
+        json_io::save_json(path, all);
     }
 
     fn save_batch<E>(&self, mut entities: Vec<E>)
@@ -124,6 +99,8 @@ impl Database for JsonDatabase {
         let _guard = self.fs_mutex.lock();
         let mut all = self.get_all::<E>();
         all.append(&mut entities);
-        self.save_json(all);
+
+        let path = self.path_to_entity::<E>();
+        json_io::save_json(path, all);
     }
 }
