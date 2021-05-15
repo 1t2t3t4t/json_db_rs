@@ -5,7 +5,6 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::path::Path;
 use std::fs::File;
 use std::io::{Write, Cursor};
-use std::str::from_utf8;
 
 pub trait Database: Send + Sync {
     fn get_all<E>(&self) -> Vec<E>
@@ -51,6 +50,16 @@ impl JsonDatabase {
             .last()
             .unwrap_or_default();
         format!("{}/{}.jsondb", self.path, type_name)
+    }
+
+    pub fn drop_db<E>(&self)
+    where
+        E: DeserializeOwned {
+        let path = self.path_to_entity::<E>();
+        let path_obj = std::path::Path::new(&path);
+        if path_obj.exists() {
+            std::fs::remove_file(path_obj).expect("Unable to drop");
+        }
     }
 
     fn load_json<E>(&self) -> Vec<E>

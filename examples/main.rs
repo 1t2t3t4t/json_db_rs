@@ -1,7 +1,5 @@
 use json_db_rs::{Database, JsonDatabase};
 use serde::{Deserialize, Serialize};
-use futures::executor::block_on;
-use tokio::task::spawn_blocking;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct MyThing {
