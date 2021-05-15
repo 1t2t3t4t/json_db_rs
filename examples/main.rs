@@ -8,7 +8,7 @@ struct MyThing {
     #[serde(default)]
     rank: i32,
     #[serde(default)]
-    something: Option<String>
+    something: Option<String>,
 }
 
 fn elapsed_time(func: impl FnOnce()) {
@@ -35,7 +35,7 @@ fn extreme_write() {
             name: "YoYo".to_string(),
             rank: i,
             age: i,
-            something: Some("Hi".to_string())
+            something: Some("Hi".to_string()),
         };
         thing_to_add.push(obj);
     }

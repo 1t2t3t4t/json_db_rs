@@ -1,6 +1,6 @@
-use json_db_rs::{JsonDatabase, Database};
+use json_db_rs::{Database, JsonDatabase};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 struct TestObj {
@@ -9,7 +9,7 @@ struct TestObj {
     #[serde(default)]
     rank: i32,
     #[serde(default)]
-    something: Option<String>
+    something: Option<String>,
 }
 
 fn write_objs(amount: i32) -> Vec<TestObj> {
@@ -20,7 +20,7 @@ fn write_objs(amount: i32) -> Vec<TestObj> {
             name: "YoYo".to_string(),
             rank: i,
             age: i,
-            something: Some("Hi".to_string())
+            something: Some("Hi".to_string()),
         };
         thing_to_add.push(obj);
     }

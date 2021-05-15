@@ -2,9 +2,9 @@ use std::sync::Mutex;
 
 use serde::{de::DeserializeOwned, Serialize};
 
-use std::path::Path;
 use std::fs::File;
-use std::io::{Write, Cursor};
+use std::io::{Cursor, Write};
+use std::path::Path;
 
 pub trait Database: Send + Sync {
     fn get_all<E>(&self) -> Vec<E>
@@ -54,7 +54,8 @@ impl JsonDatabase {
 
     pub fn drop_db<E>(&self)
     where
-        E: DeserializeOwned {
+        E: DeserializeOwned,
+    {
         let path = self.path_to_entity::<E>();
         let path_obj = std::path::Path::new(&path);
         if path_obj.exists() {
@@ -86,7 +87,8 @@ impl JsonDatabase {
         let json_str = serde_json::to_string(&json).unwrap_or_default();
         let encoded = zstd::encode_all(json_str.as_bytes(), 0).unwrap();
         let mut file = File::create(path.clone()).unwrap();
-        file.write_all(&encoded).expect(&format!("Unable to write to path {}", path));
+        file.write_all(&encoded)
+            .expect(&format!("Unable to write to path {}", path));
     }
 }
 
