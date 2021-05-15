@@ -3,6 +3,9 @@ use std::sync::Mutex;
 use serde::{de::DeserializeOwned, Serialize};
 
 use std::path::Path;
+use std::fs::File;
+use std::io::{Write, Cursor};
+use std::str::from_utf8;
 
 pub trait Database: Send + Sync {
     fn get_all<E>(&self) -> Vec<E>
@@ -47,7 +50,7 @@ impl JsonDatabase {
             .split("::")
             .last()
             .unwrap_or_default();
-        format!("{}/{}.json", self.path, type_name)
+        format!("{}/{}.jsondb", self.path, type_name)
     }
 
     fn load_json<E>(&self) -> Vec<E>
@@ -55,11 +58,14 @@ impl JsonDatabase {
         E: DeserializeOwned,
     {
         let path = self.path_to_entity::<E>();
-        let file_content = std::fs::read_to_string(path).unwrap_or_default();
-        if file_content.is_empty() {
+        let file_content = std::fs::read(path).unwrap_or_default();
+        let file_cursor = Cursor::new(file_content);
+        let decoded = zstd::decode_all(file_cursor).unwrap_or_default();
+        let json_content = String::from_utf8(decoded).unwrap_or_default();
+        if json_content.is_empty() {
             return vec![];
         }
-        let entities = serde_json::from_str::<Vec<E>>(&file_content);
+        let entities = serde_json::from_str::<Vec<E>>(&json_content);
         entities.unwrap()
     }
 
@@ -69,8 +75,9 @@ impl JsonDatabase {
     {
         let path = self.path_to_entity::<E>();
         let json_str = serde_json::to_string(&json).unwrap_or_default();
-        std::fs::write(path.clone(), &json_str)
-            .expect(&format!("Unable to write to path {}", path));
+        let encoded = zstd::encode_all(json_str.as_bytes(), 0).unwrap();
+        let mut file = File::create(path.clone()).unwrap();
+        file.write_all(&encoded).expect(&format!("Unable to write to path {}", path));
     }
 }
 

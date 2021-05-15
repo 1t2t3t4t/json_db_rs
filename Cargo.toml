@@ -14,6 +14,7 @@ path = "examples/main.rs"
 serde = { version = "1.0.125", features = ["derive"] }
 serde_json = "1.0.64"
 futures = "0.3.14"
+zstd = "0.7.0"
 
 [dev-dependencies]
 tokio = { version = "1.5.0", features = ["full"] }
