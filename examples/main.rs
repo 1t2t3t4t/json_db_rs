@@ -14,7 +14,10 @@ struct MyThing {
 fn elapsed_time(func: impl FnOnce()) {
     let start = std::time::Instant::now();
     func();
-    println!("Elapsed time: {} m sec", start.elapsed().as_secs_f32() * 1000f32);
+    println!(
+        "Elapsed time: {} m sec",
+        start.elapsed().as_secs_f32() * 1000f32
+    );
 }
 
 fn read_all() {
@@ -36,7 +39,7 @@ fn extreme_write() {
         };
         thing_to_add.push(obj);
     }
-    db.save_batch(thing_to_add);
+    db.push_batch(thing_to_add);
 }
 
 #[tokio::main]

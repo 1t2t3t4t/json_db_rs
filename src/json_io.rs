@@ -3,7 +3,7 @@ use serde::Serialize;
 use std::fs::File;
 use std::io::{Cursor, Write};
 
-pub(crate) fn load_json<E>(path: String) -> Vec<E>
+pub(crate) fn load_json<E>(path: String) -> Option<E>
 where
     E: DeserializeOwned,
 {
@@ -12,13 +12,21 @@ where
     let decoded = zstd::decode_all(file_cursor).unwrap_or_default();
     let json_content = String::from_utf8(decoded).unwrap_or_default();
     if json_content.is_empty() {
-        return vec![];
+        None
+    } else {
+        println!("{}", json_content);
+        Some(serde_json::from_str::<E>(&json_content).expect("Failed to format json"))
     }
-    let entities = serde_json::from_str::<Vec<E>>(&json_content);
-    entities.unwrap()
 }
 
-pub(crate) fn save_json<E>(path: String, json: Vec<E>)
+pub(crate) fn load_json_vec<E>(path: String) -> Vec<E>
+where
+    E: DeserializeOwned,
+{
+    load_json::<Vec<E>>(path).unwrap_or_default()
+}
+
+pub(crate) fn save_json<E>(path: String, json: E)
 where
     E: Serialize,
 {
