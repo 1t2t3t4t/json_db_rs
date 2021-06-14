@@ -24,7 +24,7 @@ pub trait Database: Send + Sync {
     where
         E: Serialize + DeserializeOwned;
 
-    fn drop_db<E>(&self)
+    fn drop_db<E>(&self, pluralize: bool)
     where
         E: DeserializeOwned;
 }
@@ -53,13 +53,17 @@ impl JsonDatabase {
         }
     }
 
-    fn path_to_entity<E>(&self) -> String {
+    fn path_to_entity<E>(&self, pluralize: bool) -> String {
         guard_path_does_not_exist(self.path.clone());
         let type_name = std::any::type_name::<E>()
             .split("::")
             .last()
             .unwrap_or_default();
-        format!("{}/{}.jsondb", self.path, type_name)
+        if pluralize {
+            format!("{}/{}s.jsondb", self.path, type_name)
+        } else {
+            format!("{}/{}.jsondb", self.path, type_name)
+        }
     }
 }
 
@@ -74,7 +78,7 @@ impl Database for JsonDatabase {
     where
         E: DeserializeOwned,
     {
-        let path = self.path_to_entity::<E>();
+        let path = self.path_to_entity::<E>(false);
         json_io::load_json(path)
     }
 
@@ -82,7 +86,7 @@ impl Database for JsonDatabase {
     where
         E: DeserializeOwned,
     {
-        let path = self.path_to_entity::<E>();
+        let path = self.path_to_entity::<E>(true);
         let json = json_io::load_json_vec::<E>(path);
         json
     }
@@ -92,7 +96,7 @@ impl Database for JsonDatabase {
         E: Serialize + DeserializeOwned,
     {
         let _guard = self.fs_mutex.lock();
-        let path = self.path_to_entity::<E>();
+        let path = self.path_to_entity::<E>(false);
         json_io::save_json(path, entity);
     }
 
@@ -104,7 +108,7 @@ impl Database for JsonDatabase {
         let mut all = self.get_all::<E>();
         all.push(entity);
 
-        let path = self.path_to_entity::<E>();
+        let path = self.path_to_entity::<E>(true);
         json_io::save_json(path, all);
     }
 
@@ -116,15 +120,15 @@ impl Database for JsonDatabase {
         let mut all = self.get_all::<E>();
         all.append(&mut entities);
 
-        let path = self.path_to_entity::<E>();
+        let path = self.path_to_entity::<E>(true);
         json_io::save_json(path, all);
     }
 
-    fn drop_db<E>(&self)
+    fn drop_db<E>(&self, pluralize: bool)
     where
         E: DeserializeOwned,
     {
-        let path = self.path_to_entity::<E>();
+        let path = self.path_to_entity::<E>(pluralize);
         let path_obj = std::path::Path::new(&path);
         if path_obj.exists() {
             std::fs::remove_file(path_obj).expect("Unable to drop");

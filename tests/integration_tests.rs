@@ -13,7 +13,8 @@ struct TestObj {
 }
 
 fn setup<T: Database>(db: &T) {
-    db.drop_db::<TestObj>();
+    db.drop_db::<TestObj>(true);
+    db.drop_db::<TestObj>(false);
 }
 
 fn write_objs(amount: i32, db: &JsonDatabase) -> Vec<TestObj> {

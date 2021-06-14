@@ -24,7 +24,7 @@ fn read_all() {
     println!("Call");
     let db = JsonDatabase::default();
     let all = db.get_all::<MyThing>();
-    println!("{}", all.len())
+    println!("{}", all.len());
 }
 
 fn extreme_write() {
@@ -45,7 +45,6 @@ fn extreme_write() {
 #[tokio::main]
 async fn main() {
     elapsed_time(|| {
-        extreme_write();
         read_all();
     });
 }
