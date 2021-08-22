@@ -1,5 +1,9 @@
-use json_db_rs::{Database, JsonDatabase};
+use std::{sync::Arc, thread};
+
+use futures::{executor::block_on, join};
+use json_db_rs::{DatabaseOps, JsonDatabase};
 use serde::{Deserialize, Serialize};
+use tokio::task::spawn_blocking;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct MyThing {
@@ -27,23 +31,34 @@ fn read_all() {
     println!("{}", all.len());
 }
 
-fn extreme_write() {
-    let db = JsonDatabase::default();
-    let mut thing_to_add = Vec::<MyThing>::new();
-    for i in 0..1000 {
+fn extreme_write(db: &JsonDatabase) {
+    println!("{:?}", thread::current().id());
+    for i in 0..100 {
         let obj = MyThing {
             name: "YoYo".to_string(),
             rank: i,
             age: i,
             something: Some("Hi".to_string()),
         };
-        thing_to_add.push(obj);
+        db.push(obj);
     }
-    db.push_batch(thing_to_add);
 }
 
 #[tokio::main]
 async fn main() {
+    let db = Arc::new(JsonDatabase::default());
+    let db2 = db.clone();
+    elapsed_time(|| {
+        let join1 = spawn_blocking(move || {
+            extreme_write(&*db);
+        });
+        let join2 = spawn_blocking(move || {
+            extreme_write(&*db2);
+        });
+        block_on(async {
+            join!(join1, join2);
+        });
+    });
     elapsed_time(|| {
         read_all();
     });

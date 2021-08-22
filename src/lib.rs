@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -6,7 +6,7 @@ use std::path::Path;
 
 mod json_io;
 
-pub trait Database: Send + Sync {
+pub trait DatabaseOps {
     fn get_one<E>(&self) -> Option<E>
     where
         E: DeserializeOwned;
@@ -23,8 +23,12 @@ pub trait Database: Send + Sync {
     fn push_batch<E>(&self, entities: Vec<E>)
     where
         E: Serialize + DeserializeOwned;
+}
 
-    fn drop_db<E>(&self, pluralize: bool)
+pub trait Database: Send + Sync + DatabaseOps {
+    fn transaction(&self, func: impl FnOnce());
+
+    fn drop<E>(&self, pluralize: bool)
     where
         E: DeserializeOwned;
 }
@@ -34,6 +38,7 @@ const DEFAULT_FILE_PATH: &str = "db";
 #[derive(Debug)]
 pub struct JsonDatabase {
     fs_mutex: Mutex<()>,
+    transaction_mutex: Mutex<()>,
     path: String,
 }
 
@@ -45,11 +50,21 @@ fn guard_path_does_not_exist(p: String) {
     std::fs::create_dir_all(p).unwrap();
 }
 
+fn get_lock<'a, T>(
+    mutex_result: Result<MutexGuard<'a, T>, PoisonError<MutexGuard<'a, T>>>,
+) -> MutexGuard<'a, T> {
+    match mutex_result {
+        Ok(lock) => lock,
+        Err(poison) => poison.into_inner(),
+    }
+}
+
 impl JsonDatabase {
     pub fn new_with_path(path: &str) -> Self {
         Self {
             path: path.to_string(),
             fs_mutex: Mutex::new(()),
+            transaction_mutex: Mutex::new(()),
         }
     }
 
@@ -74,6 +89,27 @@ impl Default for JsonDatabase {
 }
 
 impl Database for JsonDatabase {
+    fn drop<E>(&self, pluralize: bool)
+    where
+        E: DeserializeOwned,
+    {
+        let guard_result = self.fs_mutex.lock();
+        let _guard = get_lock(guard_result);
+        let path = self.path_to_entity::<E>(pluralize);
+        let path_obj = std::path::Path::new(&path);
+        if path_obj.exists() {
+            std::fs::remove_file(path_obj).expect("Unable to drop");
+        }
+    }
+
+    fn transaction(&self, func: impl FnOnce()) {
+        let guard_result = self.transaction_mutex.lock();
+        let _guard = get_lock(guard_result);
+        func();
+    }
+}
+
+impl DatabaseOps for JsonDatabase {
     fn get_one<E>(&self) -> Option<E>
     where
         E: DeserializeOwned,
@@ -95,7 +131,8 @@ impl Database for JsonDatabase {
     where
         E: Serialize + DeserializeOwned,
     {
-        let _guard = self.fs_mutex.lock();
+        let guard_result = self.fs_mutex.lock();
+        let _guard = get_lock(guard_result);
         let path = self.path_to_entity::<E>(false);
         json_io::save_json(path, entity);
     }
@@ -104,7 +141,8 @@ impl Database for JsonDatabase {
     where
         E: Serialize + DeserializeOwned,
     {
-        let _guard = self.fs_mutex.lock();
+        let guard_result = self.fs_mutex.lock();
+        let _guard = get_lock(guard_result);
         let mut all = self.get_all::<E>();
         all.push(entity);
 
@@ -116,22 +154,12 @@ impl Database for JsonDatabase {
     where
         E: Serialize + DeserializeOwned,
     {
-        let _guard = self.fs_mutex.lock();
+        let guard_result = self.fs_mutex.lock();
+        let _guard = get_lock(guard_result);
         let mut all = self.get_all::<E>();
         all.append(&mut entities);
 
         let path = self.path_to_entity::<E>(true);
         json_io::save_json(path, all);
-    }
-
-    fn drop_db<E>(&self, pluralize: bool)
-    where
-        E: DeserializeOwned,
-    {
-        let path = self.path_to_entity::<E>(pluralize);
-        let path_obj = std::path::Path::new(&path);
-        if path_obj.exists() {
-            std::fs::remove_file(path_obj).expect("Unable to drop");
-        }
     }
 }
