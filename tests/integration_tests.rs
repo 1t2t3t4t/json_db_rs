@@ -1,4 +1,4 @@
-use json_db_rs::{Database, JsonDatabase};
+use json_db_rs::{Database, DatabaseOps, JsonDatabase};
 
 use serde::{Deserialize, Serialize};
 
@@ -13,8 +13,8 @@ struct TestObj {
 }
 
 fn setup<T: Database>(db: &T) {
-    db.drop_db::<TestObj>(true);
-    db.drop_db::<TestObj>(false);
+    db.drop::<TestObj>(true);
+    db.drop::<TestObj>(false);
 }
 
 fn write_objs(amount: i32, db: &JsonDatabase) -> Vec<TestObj> {
