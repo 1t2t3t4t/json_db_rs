@@ -80,10 +80,11 @@ impl JsonDatabase {
             .split("::")
             .last()
             .unwrap_or_default();
+        let file_type = if self.encode { "jsondb" } else { "json" };
         if pluralize {
-            format!("{}/{}s.jsondb", self.path, type_name)
+            format!("{}/{}s.{}", self.path, type_name, file_type)
         } else {
-            format!("{}/{}.jsondb", self.path, type_name)
+            format!("{}/{}.{}", self.path, type_name, file_type)
         }
     }
 }
@@ -95,6 +96,12 @@ impl Default for JsonDatabase {
 }
 
 impl Database for JsonDatabase {
+    fn transaction(&self, func: impl FnOnce()) {
+        let guard_result = self.transaction_mutex.lock();
+        let _guard = get_lock(guard_result);
+        func();
+    }
+
     fn drop<E>(&self, pluralize: bool)
     where
         E: DeserializeOwned,
@@ -106,12 +113,6 @@ impl Database for JsonDatabase {
         if path_obj.exists() {
             std::fs::remove_file(path_obj).expect("Unable to drop");
         }
-    }
-
-    fn transaction(&self, func: impl FnOnce()) {
-        let guard_result = self.transaction_mutex.lock();
-        let _guard = get_lock(guard_result);
-        func();
     }
 }
 
