@@ -40,6 +40,7 @@ pub struct JsonDatabase {
     fs_mutex: Mutex<()>,
     transaction_mutex: Mutex<()>,
     path: String,
+    encode: bool,
 }
 
 fn guard_path_does_not_exist(p: String) {
@@ -60,11 +61,16 @@ fn get_lock<'a, T>(
 }
 
 impl JsonDatabase {
+    pub fn set_encode(&mut self, flag: bool) {
+        self.encode = flag;
+    }
+
     pub fn new_with_path(path: &str) -> Self {
         Self {
             path: path.to_string(),
             fs_mutex: Mutex::new(()),
             transaction_mutex: Mutex::new(()),
+            encode: true,
         }
     }
 
@@ -115,7 +121,7 @@ impl DatabaseOps for JsonDatabase {
         E: DeserializeOwned,
     {
         let path = self.path_to_entity::<E>(false);
-        json_io::load_json(path)
+        json_io::load_json(path, self.encode)
     }
 
     fn get_all<E>(&self) -> Vec<E>
@@ -123,8 +129,7 @@ impl DatabaseOps for JsonDatabase {
         E: DeserializeOwned,
     {
         let path = self.path_to_entity::<E>(true);
-        let json = json_io::load_json_vec::<E>(path);
-        json
+        json_io::load_json_vec::<E>(path, self.encode)
     }
 
     fn save<E>(&self, entity: E)
@@ -134,7 +139,7 @@ impl DatabaseOps for JsonDatabase {
         let guard_result = self.fs_mutex.lock();
         let _guard = get_lock(guard_result);
         let path = self.path_to_entity::<E>(false);
-        json_io::save_json(path, entity);
+        json_io::save_json(path, entity, self.encode);
     }
 
     fn push<E>(&self, entity: E)
@@ -147,7 +152,7 @@ impl DatabaseOps for JsonDatabase {
         all.push(entity);
 
         let path = self.path_to_entity::<E>(true);
-        json_io::save_json(path, all);
+        json_io::save_json(path, all, self.encode);
     }
 
     fn push_batch<E>(&self, mut entities: Vec<E>)
@@ -160,6 +165,6 @@ impl DatabaseOps for JsonDatabase {
         all.append(&mut entities);
 
         let path = self.path_to_entity::<E>(true);
-        json_io::save_json(path, all);
+        json_io::save_json(path, all, self.encode);
     }
 }

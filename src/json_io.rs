@@ -3,14 +3,16 @@ use serde::Serialize;
 use std::fs::File;
 use std::io::{Cursor, Write};
 
-pub(crate) fn load_json<E>(path: String) -> Option<E>
+pub(crate) fn load_json<E>(path: String, encode: bool) -> Option<E>
 where
     E: DeserializeOwned,
 {
-    let file_content = std::fs::read(path).unwrap_or_default();
-    let file_cursor = Cursor::new(file_content);
-    let decoded = zstd::decode_all(file_cursor).unwrap_or_default();
-    let json_content = String::from_utf8(decoded).unwrap_or_default();
+    let mut file_content = std::fs::read(path).unwrap_or_default();
+    if encode {
+        let file_cursor = Cursor::new(file_content);
+        file_content = zstd::decode_all(file_cursor).unwrap_or_default();
+    }
+    let json_content = String::from_utf8(file_content).unwrap_or_default();
     if json_content.is_empty() {
         None
     } else {
@@ -18,20 +20,25 @@ where
     }
 }
 
-pub(crate) fn load_json_vec<E>(path: String) -> Vec<E>
+pub(crate) fn load_json_vec<E>(path: String, encode: bool) -> Vec<E>
 where
     E: DeserializeOwned,
 {
-    load_json::<Vec<E>>(path).unwrap_or_default()
+    load_json::<Vec<E>>(path, encode).unwrap_or_default()
 }
 
-pub(crate) fn save_json<E>(path: String, json: E)
+pub(crate) fn save_json<E>(path: String, json: E, encode: bool)
 where
     E: Serialize,
 {
-    let json_str = serde_json::to_string(&json).unwrap_or_default();
-    let encoded = zstd::encode_all(json_str.as_bytes(), 0).unwrap();
+    let mut content = serde_json::to_string(&json)
+        .unwrap_or_default()
+        .as_bytes()
+        .to_vec();
+    if encode {
+        content = zstd::encode_all(Cursor::new(content), 0).unwrap();
+    }
     let mut file = File::create(path.clone()).unwrap();
-    file.write_all(&encoded)
+    file.write_all(&content)
         .expect(&format!("Unable to write to path {}", path));
 }

@@ -32,9 +32,15 @@ fn write_objs(amount: i32, db: &JsonDatabase) -> Vec<TestObj> {
     return thing_to_add;
 }
 
+fn setup_db(path: &str) -> JsonDatabase {
+    let mut db = JsonDatabase::new_with_path(path);
+    db.set_encode(false);
+    db
+}
+
 #[test]
 fn test_write_and_read_single_not_existed() {
-    let db = JsonDatabase::new_with_path("db/test/test_write_and_read_single_not_existed");
+    let db = setup_db("db/test/test_write_and_read_single_not_existed");
     setup(&db);
 
     let saved_obj = db.get_one::<TestObj>();
@@ -44,7 +50,7 @@ fn test_write_and_read_single_not_existed() {
 
 #[test]
 fn test_write_and_read_single() {
-    let db = JsonDatabase::new_with_path("db/test/test_write_and_read_single");
+    let db = setup_db("db/test/test_write_and_read_single");
     setup(&db);
     let obj = TestObj {
         name: "YoYo".to_string(),
@@ -61,7 +67,7 @@ fn test_write_and_read_single() {
 
 #[test]
 fn test_write_and_read_vec() {
-    let db = JsonDatabase::new_with_path("db/test/test_write_and_read_vec");
+    let db = setup_db("db/test/test_write_and_read_vec");
     setup(&db);
     let obj_amount = 20;
     let objs = write_objs(obj_amount, &db);
@@ -74,7 +80,7 @@ fn test_write_and_read_vec() {
 
 #[test]
 fn test_write_and_read_vec_not_existed() {
-    let db = JsonDatabase::new_with_path("db/test/test_write_and_read_vec_not_existed");
+    let db = setup_db("db/test/test_write_and_read_vec_not_existed");
     setup(&db);
 
     let all = db.get_all::<TestObj>();

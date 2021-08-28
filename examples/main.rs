@@ -55,7 +55,7 @@ async fn main() {
         let join2 = spawn_blocking(move || {
             extreme_write(&*db2);
         });
-        
+
         #[allow(unused_must_use)]
         block_on(async {
             join!(join1, join2);
