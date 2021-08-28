@@ -1,6 +1,6 @@
 [package]
 name = "json_db_rs"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Boss <bossnathakorn@gmail.com>"]
 edition = "2018"
 
