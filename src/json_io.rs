@@ -3,26 +3,31 @@ use serde::Serialize;
 use std::fs::File;
 use std::io::{Cursor, ErrorKind, Result, Write};
 
+fn decode_json_vec<E>(mut file_content: Vec<u8>, encode: bool) -> Result<Option<E>>
+where
+    E: DeserializeOwned,
+{
+    if encode {
+        let file_cursor = Cursor::new(file_content);
+        file_content = zstd::decode_all(file_cursor)?;
+    }
+    let json_content = String::from_utf8(file_content).unwrap();
+    let res = if json_content.is_empty() {
+        None
+    } else {
+        let json_from_str =
+            serde_json::from_str::<E>(&json_content).map_err(std::io::Error::from)?;
+        Some(json_from_str)
+    };
+    Ok(res)
+}
+
 pub(crate) fn load_json<E>(path: String, encode: bool) -> Result<Option<E>>
 where
     E: DeserializeOwned,
 {
     match std::fs::read(path) {
-        Ok(mut file_content) => {
-            if encode {
-                let file_cursor = Cursor::new(file_content);
-                file_content = zstd::decode_all(file_cursor)?;
-            }
-            let json_content = String::from_utf8(file_content).unwrap();
-            let res = if json_content.is_empty() {
-                None
-            } else {
-                let json_from_str =
-                    serde_json::from_str::<E>(&json_content).map_err(std::io::Error::from)?;
-                Some(json_from_str)
-            };
-            Ok(res)
-        }
+        Ok(file_content) => decode_json_vec(file_content, encode),
         Err(e) => match e.kind() {
             ErrorKind::NotFound => Ok(None),
             _ => Err(e),
