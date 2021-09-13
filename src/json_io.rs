@@ -7,8 +7,7 @@ pub(crate) fn load_json<E>(path: String, encode: bool) -> Result<Option<E>>
 where
     E: DeserializeOwned,
 {
-    let file_content = std::fs::read(path);
-    match file_content {
+    match std::fs::read(path) {
         Ok(mut file_content) => {
             if encode {
                 let file_cursor = Cursor::new(file_content);
@@ -42,12 +41,11 @@ pub(crate) fn save_json<E>(path: String, json: E, encode: bool) -> Result<()>
 where
     E: Serialize,
 {
-    let mut content = serde_json::to_string(&json)
-        .unwrap_or_default()
-        .as_bytes()
-        .to_vec();
-    if encode {
-        content = zstd::encode_all(Cursor::new(content), 0)?;
-    }
+    let content = if encode {
+        let content = serde_json::to_vec(&json)?;
+        zstd::encode_all(Cursor::new(content), 0)?
+    } else {
+        serde_json::to_vec_pretty(&json)?
+    };
     File::create(path)?.write_all(&content)
 }
