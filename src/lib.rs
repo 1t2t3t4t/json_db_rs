@@ -7,6 +7,8 @@ use std::path::Path;
 
 mod json_io;
 
+// TODO: Create Own Error and Result Type
+
 pub trait DatabaseOps {
     fn get_one<E>(&self) -> Result<Option<E>>
     where
