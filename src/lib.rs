@@ -1,26 +1,27 @@
-use std::sync::{Mutex, MutexGuard, PoisonError};
+use std::sync::{LockResult, Mutex, MutexGuard};
 
 use serde::{de::DeserializeOwned, Serialize};
 
+pub use std::io::Result;
 use std::path::Path;
 
 mod json_io;
 
 pub trait DatabaseOps {
-    fn get_one<E>(&self) -> Option<E>
+    fn get_one<E>(&self) -> Result<Option<E>>
     where
         E: DeserializeOwned;
-    fn get_all<E>(&self) -> Vec<E>
+    fn get_all<E>(&self) -> Result<Vec<E>>
     where
         E: DeserializeOwned;
 
-    fn save<E>(&self, entity: E)
+    fn save<E>(&self, entity: E) -> Result<()>
     where
         E: Serialize + DeserializeOwned;
-    fn push<E>(&self, entity: E)
+    fn push<E>(&self, entity: E) -> Result<()>
     where
         E: Serialize + DeserializeOwned;
-    fn push_batch<E>(&self, entities: Vec<E>)
+    fn push_batch<E>(&self, entities: Vec<E>) -> Result<()>
     where
         E: Serialize + DeserializeOwned;
 }
@@ -51,9 +52,7 @@ fn guard_path_does_not_exist(p: String) {
     std::fs::create_dir_all(p).unwrap();
 }
 
-fn get_lock<'a, T>(
-    mutex_result: Result<MutexGuard<'a, T>, PoisonError<MutexGuard<'a, T>>>,
-) -> MutexGuard<'a, T> {
+fn get_lock<T>(mutex_result: LockResult<MutexGuard<T>>) -> MutexGuard<T> {
     match mutex_result {
         Ok(lock) => lock,
         Err(poison) => poison.into_inner(),
@@ -117,7 +116,7 @@ impl Database for JsonDatabase {
 }
 
 impl DatabaseOps for JsonDatabase {
-    fn get_one<E>(&self) -> Option<E>
+    fn get_one<E>(&self) -> Result<Option<E>>
     where
         E: DeserializeOwned,
     {
@@ -125,7 +124,7 @@ impl DatabaseOps for JsonDatabase {
         json_io::load_json(path, self.encode)
     }
 
-    fn get_all<E>(&self) -> Vec<E>
+    fn get_all<E>(&self) -> Result<Vec<E>>
     where
         E: DeserializeOwned,
     {
@@ -133,39 +132,39 @@ impl DatabaseOps for JsonDatabase {
         json_io::load_json_vec::<E>(path, self.encode)
     }
 
-    fn save<E>(&self, entity: E)
+    fn save<E>(&self, entity: E) -> Result<()>
     where
         E: Serialize + DeserializeOwned,
     {
         let guard_result = self.fs_mutex.lock();
         let _guard = get_lock(guard_result);
         let path = self.path_to_entity::<E>(false);
-        json_io::save_json(path, entity, self.encode);
+        json_io::save_json(path, entity, self.encode)
     }
 
-    fn push<E>(&self, entity: E)
+    fn push<E>(&self, entity: E) -> Result<()>
     where
         E: Serialize + DeserializeOwned,
     {
         let guard_result = self.fs_mutex.lock();
         let _guard = get_lock(guard_result);
-        let mut all = self.get_all::<E>();
+        let mut all = self.get_all::<E>()?;
         all.push(entity);
 
         let path = self.path_to_entity::<E>(true);
-        json_io::save_json(path, all, self.encode);
+        json_io::save_json(path, all, self.encode)
     }
 
-    fn push_batch<E>(&self, mut entities: Vec<E>)
+    fn push_batch<E>(&self, mut entities: Vec<E>) -> Result<()>
     where
         E: Serialize + DeserializeOwned,
     {
         let guard_result = self.fs_mutex.lock();
         let _guard = get_lock(guard_result);
-        let mut all = self.get_all::<E>();
+        let mut all = self.get_all::<E>()?;
         all.append(&mut entities);
 
         let path = self.path_to_entity::<E>(true);
-        json_io::save_json(path, all, self.encode);
+        json_io::save_json(path, all, self.encode)
     }
 }

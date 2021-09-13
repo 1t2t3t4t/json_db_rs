@@ -27,7 +27,7 @@ fn elapsed_time(func: impl FnOnce()) {
 fn read_all() {
     println!("Call");
     let db = JsonDatabase::default();
-    let all = db.get_all::<MyThing>();
+    let all = db.get_all::<MyThing>().unwrap();
     println!("{}", all.len());
 }
 
@@ -40,7 +40,7 @@ fn extreme_write(db: &JsonDatabase) {
             age: i,
             something: Some("Hi".to_string()),
         };
-        db.push(obj);
+        db.push(obj).unwrap();
     }
 }
 

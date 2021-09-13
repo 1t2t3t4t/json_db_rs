@@ -28,7 +28,7 @@ fn write_objs(amount: i32, db: &JsonDatabase) -> Vec<TestObj> {
         };
         thing_to_add.push(obj);
     }
-    db.push_batch(thing_to_add.clone());
+    db.push_batch(thing_to_add.clone()).unwrap();
     return thing_to_add;
 }
 
@@ -45,7 +45,7 @@ fn test_write_and_read_single_not_existed() {
 
     let saved_obj = db.get_one::<TestObj>();
 
-    assert_eq!(None, saved_obj);
+    assert_eq!(None, saved_obj.unwrap());
 }
 
 #[test]
@@ -59,10 +59,10 @@ fn test_write_and_read_single() {
         something: Some("Hi".to_string()),
     };
 
-    db.save(obj.clone());
+    db.save(obj.clone()).unwrap();
 
     let saved_obj = db.get_one::<TestObj>();
-    assert_eq!(Some(obj), saved_obj);
+    assert_eq!(Some(obj), saved_obj.unwrap());
 }
 
 #[test]
@@ -72,7 +72,7 @@ fn test_write_and_read_vec() {
     let obj_amount = 20;
     let objs = write_objs(obj_amount, &db);
 
-    let all = db.get_all::<TestObj>();
+    let all = db.get_all::<TestObj>().unwrap();
 
     assert_eq!(all.len() as i32, obj_amount);
     assert_eq!(all, objs);
@@ -83,7 +83,7 @@ fn test_write_and_read_vec_not_existed() {
     let db = setup_db("db/test/test_write_and_read_vec_not_existed");
     setup(&db);
 
-    let all = db.get_all::<TestObj>();
+    let all = db.get_all::<TestObj>().unwrap();
 
     assert_eq!(all.len() as i32, 0i32);
 }

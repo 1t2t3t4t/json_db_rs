@@ -46,6 +46,15 @@
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/zstd-safe-34abbfc477154880/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/zstd-sys-65e612f2fba4fdb4/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/zstd-sys-c704bdb96a524636/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/libc-3fd102eb162a7991/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/proc-macro2-43a7c19b40a4246e/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/ryu-e517741c9d6a22fe/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/serde-89a600f0adff7832/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/serde_derive-5c01eeacc161e980/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/serde_json-6758b5609b974da3/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/syn-7a98eacd2d2cd427/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/zstd-safe-f5ff386c54568c3d/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/zstd-sys-8828e571f578c3d6/out" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
