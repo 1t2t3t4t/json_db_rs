@@ -1,7 +1,7 @@
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fs::File;
-use std::io::{Cursor, Error, ErrorKind, Result, Write};
+use std::io::{Cursor, ErrorKind, Result, Write};
 
 pub(crate) fn load_json<E>(path: String, encode: bool) -> Result<Option<E>>
 where
@@ -49,5 +49,5 @@ where
     if encode {
         content = zstd::encode_all(Cursor::new(content), 0)?;
     }
-    File::create(path.clone())?.write_all(&content)
+    File::create(path)?.write_all(&content)
 }

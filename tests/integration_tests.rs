@@ -29,7 +29,7 @@ fn write_objs(amount: i32, db: &JsonDatabase) -> Vec<TestObj> {
         thing_to_add.push(obj);
     }
     db.push_batch(thing_to_add.clone()).unwrap();
-    return thing_to_add;
+    thing_to_add
 }
 
 fn setup_db(path: &str) -> JsonDatabase {
